@@ -42,7 +42,8 @@ def index():
 def main():
     if not 'user_id' in session:
         return redirect(url_for('login'))
-    users = query_db("SELECT id, username FROM users")
+    query = ("SELECT id, username FROM users")
+    users = query_db(query)
     return render_template('main.html', users=users)
 
 @app.route('/settings', methods=['GET','POST'])
@@ -51,20 +52,23 @@ def settings():
         return redirect(url_for('login'))
     if request.method == 'POST':
         if request.form['action'] == 'changepassword':
-            execute_db("UPDATE users SET password = ? WHERE id = ?",
-                (request.form['password'], session['user_id']))
+            query = ("UPDATE users SET password = ? WHERE id = ?")
+            params = (request.form['password'], session['user_id'])
+            execute_db(query, params)
             flash('Successfully updated password', 'success')
         elif request.form['action'] == 'createuser':
-            execute_db("INSERT INTO users (username, password) VALUES (?, ?)",
-                (request.form['username'], request.form['password']))
+            query = ("INSERT INTO users (username, password) VALUES (?, ?)")
+            params = (request.form['username'], request.form['password'])
+            execute_db(query, params)
             flash('Successfully added user', 'success')
     return render_template('settings.html')
 
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        user = query_db("SELECT id FROM users WHERE username = ? AND password = ?",
-            (request.form['username'], request.form['password']), one=True)
+        query = ("SELECT id FROM users WHERE username = ? AND password = ?")
+        params = (request.form['username'], request.form['password'])
+        user = query_db(query, params, one=True)
         if user is None:
             flash('Username/Password not found!', 'danger')
         else:
