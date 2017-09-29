@@ -15,13 +15,13 @@ def get_db():
     db.row_factory = sqlite3.Row
     return db
 
-def query_db(query, args=(), one=False):
+def read_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
-def execute_db(query, args=()):
+def write_db(query, args=()):
     # TODO: This should be handled better...
     get_db().cursor().execute(query, args)
     get_db().commit()
@@ -43,7 +43,7 @@ def main():
     if not 'user_id' in session:
         return redirect(url_for('login'))
     query = ("SELECT id, username FROM users")
-    users = query_db(query)
+    users = read_db(query)
     return render_template('main.html', users=users)
 
 @app.route('/settings', methods=['GET','POST'])
@@ -54,12 +54,12 @@ def settings():
         if request.form['action'] == 'changepassword':
             query = ("UPDATE users SET password = ? WHERE id = ?")
             params = (request.form['password'], session['user_id'])
-            execute_db(query, params)
+            write_db(query, params)
             flash('Successfully updated password', 'success')
         elif request.form['action'] == 'createuser':
             query = ("INSERT INTO users (username, password) VALUES (?, ?)")
             params = (request.form['username'], request.form['password'])
-            execute_db(query, params)
+            write_db(query, params)
             flash('Successfully added user', 'success')
     return render_template('settings.html')
 
@@ -68,7 +68,7 @@ def login():
     if request.method == 'POST':
         query = ("SELECT id FROM users WHERE username = ? AND password = ?")
         params = (request.form['username'], request.form['password'])
-        user = query_db(query, params, one=True)
+        user = read_db(query, params, one=True)
         if user is None:
             flash('Username/Password not found!', 'danger')
         else:
