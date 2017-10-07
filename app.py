@@ -16,15 +16,22 @@ def get_db():
     return db
 
 def read_db(query, args=(), one=False):
-    cur = get_db().execute(query, args)
-    rv = cur.fetchall()
-    cur.close()
-    return (rv[0] if rv else None) if one else rv
+    # TODO: maybe add a check if args only has one, make it a tuple
+    try:
+        cur = get_db().execute(query, args)
+        rv = cur.fetchall()
+        cur.close()
+        return (rv[0] if rv else None) if one else rv
+    except sqlite3.OperationalError as err:
+        print "Database Error: {}".format(err)
 
 def write_db(query, args=()):
-    # TODO: This should be handled better...
-    get_db().cursor().execute(query, args)
-    get_db().commit()
+    # TODO: maybe add a check if args only has one, make it a tuple
+    try:
+        get_db().cursor().execute(query, args)
+        get_db().commit()
+    except sqlite3.OperationalError as err:
+        print "Database Error: {}".format(err)
 
 @app.teardown_appcontext
 def close_connection(exception):
