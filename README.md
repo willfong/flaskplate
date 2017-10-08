@@ -33,10 +33,24 @@ CRUD (Create, Read, Update, Delete) ideas
 
 ## Set up
 
+macOS & Linux
 ```
 virtualenv venv
 . venv/bin/activate
 pip install -r requirements.txt
-sqlite3 app.db < schema.sql
-FLASK_APP=app.py FLASK_DEBUG=1 flask run --host=0.0.0.0
+python -c "from app import init_db; init_db()"
+FLASK_APP=app.py FLASK_DEBUG=1 flask run
 ```
+
+Windows
+```
+virtualenv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python -c "from app import init_db; init_db()"
+SET FLASK_APP=app.py
+SET FLASK_DEBUG=1
+flask run
+```
+
+By default, Flask will only listen to connections on your computer. This is for security. To allow other devices to connect to your computer, run `flask run --host=0.0.0.0` instead of `flask run`.
