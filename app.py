@@ -16,21 +16,33 @@ def get_db():
     return db
 
 def read_db(query, args=(), one=False):
-    # TODO: maybe add a check if args only has one, make it a tuple
+    if isinstance(params, tuple):
+        args = params
+    else:
+        args = (params,)
     try:
         cur = get_db().execute(query, args)
         rv = cur.fetchall()
         cur.close()
         return (rv[0] if rv else None) if one else rv
-    except sqlite3.OperationalError as err:
+    except sqlite3.Error as err:
+        # TODO: need a way to determine operational error vs unique error
+        # Don't log operational errors like unique key violations
+        # This one logs everything.
         print "Database Error: {}".format(err)
 
 def write_db(query, args=()):
-    # TODO: maybe add a check if args only has one, make it a tuple
+    if isinstance(params, tuple):
+        args = params
+    else:
+        args = (params,)
     try:
         get_db().cursor().execute(query, args)
         get_db().commit()
-    except sqlite3.OperationalError as err:
+    except sqlite3.Error as err:
+        # TODO: need a way to determine operational error vs unique error
+        # Don't log operational errors like unique key violations
+        # This one logs everything.
         print "Database Error: {}".format(err)
 
 def init_db():

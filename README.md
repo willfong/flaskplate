@@ -12,6 +12,10 @@ There should be a way to get app ideas from our heads into a web site quickly. F
 
 Flaskplate is for putting ideas onto a web application easily and quickly without needing to be a full-time programmer.
 
+It is very important to understand all the code being used, but there is also a balance of not needing to be fully fluent in a programming language before one can start making some progress and output.
+
+Let's get the code down first and put something onto the screen. Learn about the parts that we will use all the time first, so we can get our ideas out. Learn later about the parts that is used less frequently.
+
 
 ## Why Flaskplate
 
