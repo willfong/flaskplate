@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block body %}
+<form class="form-signin" action={{url_for('settings')}} method="POST">
+  <label for="inputPassword" class="sr-only">Change Password</label>
+  <input type="password" id="inputPassword" name="password" class="form-control" placeholder="Password" required>
+  <button class="btn btn-lg btn-primary btn-block" type="submit" name="action" value="changepassword">Change Password</button>
+</form>
+{% endblock %}
