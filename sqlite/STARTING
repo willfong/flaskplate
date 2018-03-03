@@ -1,0 +1,5 @@
+Start the service with:
+
+```
+FLASK_APP=app.py flask run --port=5000
+```
