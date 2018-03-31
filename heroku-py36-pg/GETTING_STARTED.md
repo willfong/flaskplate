@@ -1,9 +1,7 @@
 # Getting Started
 
-
-# Heroku Setup
-
 ```
+git init
 heroku create
 pipenv --python 3.6 shell
 pipenv install
