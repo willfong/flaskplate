@@ -39,6 +39,8 @@ def write_db(query, params=(), last_id=False):
         args = params
     else:
         args = (params,)
+    if last_id:
+        query = '{} RETURNING {}'.format(query, last_id)
     try:
         cur = get_db().cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute(query, args)
@@ -48,7 +50,7 @@ def write_db(query, params=(), last_id=False):
         print "Database Error: {}".format(err)
         return False
     if last_id:
-        return cur.lastrowid
+        return cur.fetchone()[0]
     else:
         return True
 

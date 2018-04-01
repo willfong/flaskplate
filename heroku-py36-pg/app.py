@@ -39,16 +39,18 @@ def write_db(query, params=(), last_id=False):
         args = params
     else:
         args = (params,)
+    if last_id:
+        query = '{} RETURNING {}'.format(query, last_id)
     try:
         cur = get_db().cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute(query, args)
         get_db().commit()
     except psycopg2.Error as err:
         # TODO: need a way to determine operational error
-        print( "Database Error: {}".format(err))
+        print "Database Error: {}".format(err)
         return False
     if last_id:
-        return cur.lastrowid
+        return cur.fetchone()[0]
     else:
         return True
 
