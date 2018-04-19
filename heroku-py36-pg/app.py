@@ -47,22 +47,15 @@ def write_db(query, params=(), last_id=False):
         get_db().commit()
     except psycopg2.Error as err:
         # TODO: need a way to determine operational error
-        print "Database Error: {}".format(err)
+        print("Database Error: {}".format(err))
         return False
     if last_id:
         return cur.fetchone()[0]
     else:
         return True
 
-def init_db():
-    with app.app_context():
-        db = get_db()
-        with app.open_resource('schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
-        print("Testing initial users...")
-        query = ("SELECT * FROM users")
-        print(read_db(query))
+def safe_password(p):
+    return hashlib.sha256(p.encode('utf-8')).hexdigest()
 
 def login_required(f):
     @wraps(f)
@@ -88,9 +81,69 @@ def index():
 @app.route('/main')
 @login_required
 def main():
-    query = ("SELECT id, username FROM users")
-    users = read_db(query)
-    return render_template('main.html', users=users)
+    query = ("SELECT id, name, created FROM lists WHERE users_id = %s")
+    params = (session['user_id'])
+    lists = read_db(query, params)
+    return render_template('main.html', lists=lists)
+
+@app.route('/list/new', methods=['POST'])
+@login_required
+def newlist():
+    if len(request.form['name']) == 0:
+        return redirect(url_for('main'))
+    query = ("INSERT INTO lists (users_id, name) VALUES (%s, %s)")
+    params = (session['user_id'], request.form['name'])
+    list_id = write_db(query, params, 'id')
+    if list_id:
+        return redirect(url_for('list', id=list_id))
+    else:
+        flash('Something went wrong. Sorry.', 'warning')
+        return redirect(url_for('main'))
+
+@app.route('/list/<int:id>')
+@login_required
+def list(id):
+    query = ("SELECT id, name, created FROM lists WHERE id = %s AND users_id = %s")
+    params = (id, session['user_id'])
+    list = read_db(query, params, one=True)
+    if not list:
+        flash('List not found!', 'danger')
+        return redirect(url_for('main'))
+    query = ("SELECT id, name FROM list_items WHERE lists_id = %s")
+    params = (id)
+    items = read_db(query, params)
+    return render_template('list.html', list=list, items=items)
+
+@app.route('/list/<int:id>/delete')
+@login_required
+def list_delete(id):
+    query = ("SELECT id, name, created FROM lists WHERE id = %s AND users_id = %s")
+    params = (id, session['user_id'])
+    list = read_db(query, params, one=True)
+    if not list:
+        flash('List not found!', 'danger')
+        return redirect(url_for('main'))
+    query = ("DELETE FROM lists WHERE id = %s")
+    params = (id)
+    write_db(query, params)
+    query = ("DELETE FROM list_items WHERE lists_id = %s")
+    params = (id)
+    write_db(query, params)
+    return redirect(url_for('main'))
+
+@app.route('/list/<int:id>/add', methods=['POST'])
+@login_required
+def list_additem(id):
+    query = ("SELECT 1 FROM lists WHERE id = %s AND users_id = %s")
+    params = (id, session['user_id'])
+    list = read_db(query, params, one=True)
+    if not list:
+        flash('List not found!', 'danger')
+        return redirect(url_for('main'))
+    query = ("INSERT INTO list_items (lists_id, name) VALUES (%s, %s)")
+    params = (id, request.form['name'])
+    item = write_db(query, params)
+    return redirect(url_for('list', id=id))
 
 @app.route('/settings', methods=['GET','POST'])
 @login_required
@@ -98,27 +151,33 @@ def settings():
     if request.method == 'POST':
         if request.form['action'] == 'changepassword':
             query = ("UPDATE users SET password = %s WHERE id = %s")
-            params = (hashlib.sha256(request.form['password'].encode('utf-8')).hexdigest(), session['user_id'])
+            params = (safe_password(request.form['password']), session['user_id'])
             write_db(query, params)
             flash('Successfully updated password', 'success')
-        elif request.form['action'] == 'createuser':
-            query = ("INSERT INTO users (username, password) VALUES (%s, %s)")
-            params = (request.form['username'], hashlib.sha256(request.form['password'].encode('utf-8')).hexdigest())
-            write_db(query, params)
-            flash('Successfully added user', 'success')
     return render_template('settings.html')
 
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        query = ("SELECT id FROM users WHERE username = %s AND password = %s")
-        params = (request.form['username'], hashlib.sha256(request.form['password'].encode('utf-8')).hexdigest())
-        user = read_db(query, params, one=True)
-        if user is None:
-            flash('Username/Password not found!', 'danger')
+        if request.form['action'] == 'create':
+            query = ("INSERT INTO users (username, password) VALUES (%s, %s)")
+            params = (request.form['username'], safe_password(request.form['password']))
+            users_id = write_db(query, params, 'id')
+            if users_id:
+                flash('Welcome!', 'success')
+                session['user_id'] = users_id
+                return redirect(url_for('main'))
+            else:
+                flash('Something went wrong!', 'danger')
         else:
-            session['user_id'] = user['id']
-            return redirect(url_for('main'))
+            query = ("SELECT id FROM users WHERE username = %s AND password = %s")
+            params = (request.form['username'], safe_password(request.form['password']))
+            user = read_db(query, params, one=True)
+            if user is None:
+                flash('Username/Password not found!', 'danger')
+            else:
+                session['user_id'] = user['id']
+                return redirect(url_for('main'))
     return render_template('login.html')
 
 @app.route('/logout')

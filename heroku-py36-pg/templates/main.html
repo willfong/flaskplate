@@ -1,9 +1,15 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1>Members Only</h1>
+<h1>Welcome to your lists</h1>
 <ul class="list-group">
-  {% for user in users %}
-  <li class="list-group-item">{{user['username']}}</li>
+  {% for list in lists %}
+  <a href="{{url_for('list', id=list[0])}}" class="list-group-item list-group-item-action">{{list[1]}}<small>{{list[2]}}</small></a>
   {% endfor %}
+  <li class="list-group-item">
+    <form class="form-inline" action="{{url_for('newlist')}}" method="post">
+      <input type="text" class="form-control" name="name" placeholder="New List">
+      <button type="submit" class="btn btn-primary mb-2">Submit</button>
+    </form>
+  </li>
 </ul>
 {% endblock %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1>{{list[1]}} <small>({{list[2]}})</small></h1>
+<ul class="list-group">
+  {% for item in items %}
+  <a href="#" class="list-group-item list-group-item-action">{{item[1]}}</a>
+  {% endfor %}
+  <li class="list-group-item">
+    <form class="form-inline" action="{{url_for('list_additem', id=list[0])}}" method="post">
+      <input type="text" class="form-control" name="name" placeholder="New Item">
+      <button type="submit" class="btn btn-success mb-2">Add</button>
+    </form>
+  </li>
+</ul>
+<a class="btn btn-danger" href="{{url_for('list_delete', id=list[0])}}" role="button">Delete List</a>
+{% endblock %}
